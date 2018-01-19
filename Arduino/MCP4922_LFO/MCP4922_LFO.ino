@@ -31,8 +31,11 @@ const int MCP4922Ldac = 9;
 const int CheckPin1 = 18; // A4
 const int CheckPin2 = 19; // A5
 
+// MCP4922
+SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
+
 // Parameter
-double drate = 1.0;                 // initial output rate = 1.0Hz
+double drate = 10.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;      // = 16MHz / 8 / 128 
 
 uint8_t *waveshapes[WAVESHAPE_NUM];
@@ -76,9 +79,10 @@ ISR(TIMER2_OVF_vect)
   MCP4922Write(0, pgm_read_byte_near(waveshapes[waveshape_sel] + idx) << 4);
   
   // debounce
-  if (--waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
+  if (waveshape_pushed_wait > 0)  waveshape_pushed_wait--;
+  if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
     waveshape_sel++;
-    if (waveshape_sel >= WAVESHAPE_NUM) waveshape_sel = 0;
+    if (waveshape_sel >= WAVESHAPE_NUM)  waveshape_sel = 0;
   }
   
   digitalWrite(CheckPin1, LOW);
@@ -88,18 +92,19 @@ ISR(TIMER2_OVF_vect)
 // Setup
 //
 
-// timer2 setup
-// set prscaler to 8, PWM mode to phase correct PWM,  16000000 / 8 / 128 = 15625 Hz clock
-void Setup_timer2() {
-
-  // Timer2 PWM Mode set to Phase Correct PWM
+// TIMER2 setup
+void Setup_timer2()
+{
+  // non-PWM / Normal port operation, OC0A disconnected.
   cbi (TCCR2A, COM2A0);  
   cbi (TCCR2A, COM2A1);
 
-  sbi (TCCR2A, WGM20);  // Mode 7 / Fast PWM
+  // Mode 7 / Fast PWM
+  sbi (TCCR2A, WGM20);
   sbi (TCCR2A, WGM21);
   sbi (TCCR2B, WGM22);
 
+  // 16000000 / 8 / 128 = 15625 Hz clock
   OCR2A = 127;
 
   // Timer2 Clock Prescaler to : 8
@@ -132,14 +137,13 @@ void setup()
   
   pinMode(MCP4922Cs, OUTPUT);
   pinMode(MCP4922Ldac, OUTPUT);
-  SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
   SPI.begin();
   SPI.beginTransaction(MCP4922_SPISetting);
   
   Setup_timer2();
   
   // disable interrupts to avoid timing distortion
-  sbi(TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
+  cbi(TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
   sbi(TIMSK2,TOIE2);              // enable Timer2 Interrupt
   
   sei();
