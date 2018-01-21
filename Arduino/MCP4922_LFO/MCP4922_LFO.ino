@@ -12,7 +12,7 @@
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
-#define WAVESHAPE_NUM  (5)
+#define WAVESHAPE_NUM  (1)
 #define DEBOUNCE_WAIT (255)
 
 // Pin Assign
@@ -35,7 +35,7 @@ const int CheckPin2 = 19; // A5
 SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
-double drate = 10.0;                 // initial output rate (Hz)
+double drate = 100.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;      // = 16MHz / 8 / 128 
 
 uint8_t *waveshapes[WAVESHAPE_NUM];
@@ -116,10 +116,10 @@ void Setup_timer2()
 void setup()
 {
   waveshapes[0] = sine256;
-  waveshapes[1] = tri256;
-  waveshapes[2] = saw1_256;
-  waveshapes[3] = saw2_256;
-  waveshapes[4] = sqr256;
+//  waveshapes[1] = tri256;
+//  waveshapes[2] = saw1_256;
+//  waveshapes[3] = saw2_256;
+//  waveshapes[4] = sqr256;
 
   tword_m = pow(2, 32) * drate / refclk;  // calculate DDS tuning word;
   
