@@ -7,7 +7,7 @@
 #include <SPI.h>
 #include "avr/pgmspace.h"
 
-#include "wavetable256.h"
+#include "wavetable_12bit_8k.h"
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -36,9 +36,9 @@ SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
 double drate = 100.0;                 // initial output rate (Hz)
-const double refclk = 15625.0;      // = 16MHz / 8 / 128 
+const double refclk = 15625.0;       // = 16MHz / 8 / 128 
 
-uint8_t *waveshapes[WAVESHAPE_NUM];
+uint16_t *waveshapes[WAVESHAPE_NUM];
 uint8_t waveshape_sel = 0;           // selected waveshape
 
 // DDS
@@ -55,7 +55,7 @@ volatile uint16_t waveshape_pushed_wait = 0;
 // param
 //   channel: 0, 1
 //   val: 0 .. 4095
-void MCP4922Write(bool channel, int val)
+void MCP4922Write(bool channel, uint16_t val)
 {
   uint16_t cmd = channel << 15 | 0x3000;
   cmd |= (val & 0x0fff);
@@ -74,9 +74,9 @@ ISR(TIMER2_OVF_vect)
   
   // synthesize
   phaccu = phaccu + tword_m;
-  int idx = phaccu >> 24;  // use upper 8 bits
+  int idx = phaccu >> 19;  // use upper 13 bits
   
-  MCP4922Write(0, pgm_read_byte_near(waveshapes[waveshape_sel] + idx) << 4);
+  MCP4922Write(0, pgm_read_word_near(waveshapes[waveshape_sel] + idx));
   
   // debounce
   if (waveshape_pushed_wait > 0)  waveshape_pushed_wait--;
@@ -115,7 +115,7 @@ void Setup_timer2()
 
 void setup()
 {
-  waveshapes[0] = sine256;
+  waveshapes[0] = sin_12bit_8k;
 //  waveshapes[1] = tri256;
 //  waveshapes[2] = saw1_256;
 //  waveshapes[3] = saw2_256;
