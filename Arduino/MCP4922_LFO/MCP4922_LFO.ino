@@ -7,7 +7,7 @@
 #include <SPI.h>
 #include "avr/pgmspace.h"
 
-#include "wavetable_12bit_8k.h"
+#include "wavetable_12bit_2k.h"
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -74,7 +74,7 @@ ISR(TIMER2_OVF_vect)
   
   // synthesize
   phaccu = phaccu + tword_m;
-  int idx = phaccu >> 19;  // use upper 13 bits
+  int idx = phaccu >> 21;  // use upper 11 bits
   
   MCP4922Write(0, pgm_read_word_near(waveshapes[waveshape_sel] + idx));
   
@@ -115,12 +115,12 @@ void Setup_timer2()
 
 void setup()
 {
-  waveshapes[0] = sin_12bit_8k;
-//  waveshapes[1] = tri256;
-//  waveshapes[2] = saw1_256;
-//  waveshapes[3] = saw2_256;
-//  waveshapes[4] = sqr256;
-
+  waveshapes[0] = sin_12bit_2k;
+  waveshapes[1] = tri_12bit_2k;
+  waveshapes[2] = sqr_12bit_2k;
+  waveshapes[3] = sawup_12bit_2k;
+  waveshapes[4] = sawdown_12bit_2k;
+  
   tword_m = pow(2, 32) * drate / refclk;  // calculate DDS tuning word;
   
   pinMode(ButtonWaveShape, INPUT_PULLUP);
