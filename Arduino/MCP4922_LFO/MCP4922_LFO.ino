@@ -1,9 +1,9 @@
 /*
- * Arduino LFO
- *
- * 2018.01.19
- *
- */
+   Arduino LFO
+
+   2018.01.19
+
+*/
 #include <SPI.h>
 #include "avr/pgmspace.h"
 
@@ -36,10 +36,18 @@ SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
 double drate = 100.0;                 // initial output rate (Hz)
-const double refclk = 15625.0;       // = 16MHz / 8 / 128 
+const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
-uint16_t *waveshapes[WAVESHAPE_NUM];
-uint8_t waveshape_sel = 0;           // selected waveshape
+//uint16_t *waveshapes[WAVESHAPE_NUM];
+enum {
+  WS_SIN,
+  WS_TRI,
+  WS_SQR,
+  WS_SAWUP,
+  WS_SAWDOWN
+};
+
+int waveshape_sel = WS_SAWDOWN;           // selected waveshape
 
 // DDS
 volatile uint32_t phaccu;
@@ -59,7 +67,7 @@ void MCP4922Write(bool channel, uint16_t val)
 {
   uint16_t cmd = channel << 15 | 0x3000;
   cmd |= (val & 0x0fff);
-  
+
   digitalWrite(MCP4922Ldac, HIGH);
   digitalWrite(MCP4922Cs, LOW);
   SPI.transfer(highByte(cmd));
@@ -71,20 +79,36 @@ void MCP4922Write(bool channel, uint16_t val)
 ISR(TIMER2_OVF_vect)
 {
   digitalWrite(CheckPin1, HIGH);
-  
+
   // synthesize
   phaccu = phaccu + tword_m;
   int idx = phaccu >> 21;  // use upper 11 bits
-  
-  MCP4922Write(0, pgm_read_word_near(waveshapes[waveshape_sel] + idx));
-  
+
+  switch (waveshape_sel) {
+    case WS_SIN:
+      MCP4922Write(0, pgm_read_word_near(sin_12bit_2k + idx));
+      break;
+    case WS_TRI:
+      MCP4922Write(0, pgm_read_word_near(tri_12bit_2k + idx));
+      break;
+    case WS_SQR:
+      MCP4922Write(0, pgm_read_word_near(sqr_12bit_2k + idx));
+      break;
+    case WS_SAWUP:
+      MCP4922Write(0, pgm_read_word_near(sawup_12bit_2k + idx));
+      break;
+    case WS_SAWDOWN:
+      MCP4922Write(0, pgm_read_word_near(sawdown_12bit_2k + idx));
+      break;
+  }
+
   // debounce
   if (waveshape_pushed_wait > 0)  waveshape_pushed_wait--;
   if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
     waveshape_sel++;
     if (waveshape_sel >= WAVESHAPE_NUM)  waveshape_sel = 0;
   }
-  
+
   digitalWrite(CheckPin1, LOW);
 }
 
@@ -96,7 +120,7 @@ ISR(TIMER2_OVF_vect)
 void Setup_timer2()
 {
   // non-PWM / Normal port operation, OC0A disconnected.
-  cbi (TCCR2A, COM2A0);  
+  cbi (TCCR2A, COM2A0);
   cbi (TCCR2A, COM2A1);
 
   // Mode 7 / Fast PWM
@@ -115,37 +139,39 @@ void Setup_timer2()
 
 void setup()
 {
-  waveshapes[0] = sin_12bit_2k;
-  waveshapes[1] = tri_12bit_2k;
-  waveshapes[2] = sqr_12bit_2k;
-  waveshapes[3] = sawup_12bit_2k;
-  waveshapes[4] = sawdown_12bit_2k;
-  
+  /*
+    waveshapes[0] = sin_12bit_2k;
+    waveshapes[1] = tri_12bit_2k;
+    waveshapes[2] = sqr_12bit_2k;
+    waveshapes[3] = sawup_12bit_2k;
+    waveshapes[4] = sawdown_12bit_2k;
+  */
   tword_m = pow(2, 32) * drate / refclk;  // calculate DDS tuning word;
-  
+
   pinMode(ButtonWaveShape, INPUT_PULLUP);
-  
+
   pinMode(LedSquare, OUTPUT);
   pinMode(LedSawUp, OUTPUT);
   pinMode(LedSquare, OUTPUT);
   pinMode(LedSawDown, OUTPUT);
   pinMode(LedTriangle, OUTPUT);
   pinMode(LedSine, OUTPUT);
-  
+
   pinMode(CheckPin1, OUTPUT);
   pinMode(CheckPin2, OUTPUT);
-  
+
   pinMode(MCP4922Cs, OUTPUT);
+  digitalWrite(MCP4922Cs, HIGH);  // initially inactive
   pinMode(MCP4922Ldac, OUTPUT);
   SPI.begin();
   SPI.beginTransaction(MCP4922_SPISetting);
-  
+
   Setup_timer2();
-  
+
   // disable interrupts to avoid timing distortion
-  cbi(TIMSK0,TOIE0);              // disable Timer0 !!! delay() is now not available
-  sbi(TIMSK2,TOIE2);              // enable Timer2 Interrupt
-  
+  cbi(TIMSK0, TOIE0);             // disable Timer0 !!! delay() is now not available
+  sbi(TIMSK2, TOIE2);             // enable Timer2 Interrupt
+
   sei();
 }
 
@@ -155,13 +181,13 @@ void setup()
 void loop()
 {
   digitalWrite(CheckPin2, HIGH);
-  
+
   // drate = (float)analgoRead(PotRate) / 102.4f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
-  
+
   if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW)
-      waveshape_pushed_wait = DEBOUNCE_WAIT;
-  
+    waveshape_pushed_wait = DEBOUNCE_WAIT;
+
   digitalWrite(CheckPin2, LOW);
 }
 
