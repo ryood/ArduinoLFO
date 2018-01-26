@@ -20,7 +20,8 @@
 #define DEBOUNCE_WAIT (1000)
 
 // Pin Assign
-const int PotRate = 0;     // A0
+const int PotRate = 0;          // A0
+const int PotPulseWidth = 1;    // A1
 
 const int ButtonWaveShape = 2;
 
@@ -33,8 +34,8 @@ const int LedSawDown = 7;
 const int MCP4922Ldac = 9;
 const int MCP4922Cs = 10;
 
-const int CheckPin1 = 18; // A4
-const int CheckPin2 = 19; // A5
+const int CheckPin1 = 18;      // A4
+const int CheckPin2 = 19;      // A5
 
 // MCP4922
 SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
@@ -43,7 +44,6 @@ SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 double drate = 10.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
-//uint16_t *waveshapes[WAVESHAPE_NUM];
 enum {
   WS_SIN,
   WS_TRI,
@@ -53,6 +53,8 @@ enum {
 };
 
 int waveshape_sel = WS_SIN;           // selected waveshape
+
+int pulse_width = 512;
 
 // DDS
 volatile uint32_t phaccu;
@@ -208,6 +210,9 @@ void loop()
   drate = (float)analogRead(PotRate) / 102.3f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
+  // Pulse Width
+  pulse_width = analogRead(PotPulseWidth);
+
   // Write to LEDs (D3~D7)
   byte portd_bits = (1 << (waveshape_sel + 3)) | (PORTD & 0x07);
   PORTD = portd_bits;
@@ -221,6 +226,8 @@ void loop()
   Serial.print(waveshape_pushed_wait);
   Serial.print("\tdrate: ");
   Serial.print(drate);
+  Serial.print("\tpulse_width: ");
+  Serial.print(pulse_width);
   Serial.print("\tPORTD: ");
   Serial.print(portd_bits, BIN);
   Serial.println("");
