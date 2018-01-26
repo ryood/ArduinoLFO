@@ -123,7 +123,6 @@ ISR(TIMER2_OVF_vect)
 
 void waveshape_pushed()
 {
-  digitalWrite(LedSin, !digitalRead(LedSin));
   waveshape_pushed_wait = DEBOUNCE_WAIT;
 }
 
@@ -205,8 +204,13 @@ void loop()
 {
   digitalWrite(CheckPin2, HIGH);
 
-  // drate = (float)analgoRead(PotRate) / 102.4f;
+  // DDS
+  drate = (float)analogRead(PotRate) / 102.3f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
+
+  // Write to LEDs (D3~D7)
+  byte portd_bits = (1 << (waveshape_sel + 3)) | (PORTD & 0x07);
+  PORTD = portd_bits;
 
   digitalWrite(CheckPin2, LOW);
 
@@ -215,6 +219,10 @@ void loop()
   Serial.print(waveshape_sel);
   Serial.print("\twaveshape_pushed_wait: ");
   Serial.print(waveshape_pushed_wait);
+  Serial.print("\tdrate: ");
+  Serial.print(drate);
+  Serial.print("\tPORTD: ");
+  Serial.print(portd_bits, BIN);
   Serial.println("");
 #endif
 
