@@ -9,11 +9,15 @@
 
 #include "wavetable_12bit_2k.h"
 
+#define UART_TRACE  (1)
+#define TITLE_STR1  ("Arduino LFO")
+#define TITLE_STR2  ("20180124")
+
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
 #define WAVESHAPE_NUM  (1)
-#define DEBOUNCE_WAIT (255)
+#define DEBOUNCE_WAIT (64)
 
 // Pin Assign
 const int PotRate = 0;     // A0
@@ -35,7 +39,7 @@ const int CheckPin2 = 19; // A5
 SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
-double drate = 100.0;                 // initial output rate (Hz)
+double drate = 10.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
 //uint16_t *waveshapes[WAVESHAPE_NUM];
@@ -47,7 +51,7 @@ enum {
   WS_SAWDOWN
 };
 
-int waveshape_sel = WS_SAWDOWN;           // selected waveshape
+int waveshape_sel = WS_SAWUP;           // selected waveshape
 
 // DDS
 volatile uint32_t phaccu;
@@ -172,6 +176,12 @@ void setup()
   cbi(TIMSK0, TOIE0);             // disable Timer0 !!! delay() is now not available
   sbi(TIMSK2, TOIE2);             // enable Timer2 Interrupt
 
+#if UART_TRACE
+  Serial.begin(9600);
+  Serial.println(TITLE_STR1);
+  Serial.println(TITLE_STR2);
+#endif
+  
   sei();
 }
 
@@ -185,9 +195,20 @@ void loop()
   // drate = (float)analgoRead(PotRate) / 102.4f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
-  if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW)
+  if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
     waveshape_pushed_wait = DEBOUNCE_WAIT;
+    digitalWrite(LedSine, !digitalRead(LedSine));
+  }
 
   digitalWrite(CheckPin2, LOW);
+
+#if UART_TRACE
+  Serial.print("waveshape_sel: ");
+  Serial.print(waveshape_sel);
+  Serial.print("\twaveshape_pushed_wait: ");
+  Serial.print(waveshape_pushed_wait);
+  Serial.println("");
+#endif
+
 }
 
