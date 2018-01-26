@@ -17,7 +17,7 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
 #define WAVESHAPE_NUM  (5)
-#define DEBOUNCE_WAIT (255)
+#define DEBOUNCE_WAIT (1000)
 
 // Pin Assign
 const int PotRate = 0;     // A0
@@ -52,7 +52,7 @@ enum {
   WS_SAWDOWN
 };
 
-int waveshape_sel = WS_SAWUP;           // selected waveshape
+int waveshape_sel = WS_SIN;           // selected waveshape
 
 // DDS
 volatile uint32_t phaccu;
@@ -154,19 +154,12 @@ void Setup_timer2()
 
 void LedsCheck()
 {
-  for (int i = 0; i < 5; i++) {
-    digitalWrite(LedSqr, HIGH);
-    digitalWrite(LedSawUp, HIGH);
-    digitalWrite(LedSawDown, HIGH);
-    digitalWrite(LedTri, HIGH);
-    digitalWrite(LedSin, HIGH);
-    delay(100);
-    digitalWrite(LedSqr, LOW);
-    digitalWrite(LedSawUp, LOW);
-    digitalWrite(LedSawDown, LOW);
-    digitalWrite(LedTri, LOW);
-    digitalWrite(LedSin, LOW);
-    delay(100);
+  for (int j = 0; j < 3; j++) {
+    for (int i = 3; i <= 7; i++) {
+      PORTD |= (1 << i);
+      delay(100);
+      PORTD &= ~(1 << i);
+    }
   }
 }
 
@@ -177,19 +170,15 @@ void setup()
   pinMode(ButtonWaveShape, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ButtonWaveShape), waveshape_pushed, FALLING);
 
-  pinMode(LedSin, OUTPUT);
-  pinMode(LedTri, OUTPUT);
-  pinMode(LedSqr, OUTPUT);
-  pinMode(LedSawUp, OUTPUT);
-  pinMode(LedSawDown, OUTPUT);
-
+  // set LEDs (D3~D7) as OUTPUT
+  DDRD |= 0xf8;
   LedsCheck();
 
   pinMode(CheckPin1, OUTPUT);
   pinMode(CheckPin2, OUTPUT);
 
   pinMode(MCP4922Cs, OUTPUT);
-  digitalWrite(MCP4922Cs, HIGH);  // initially inactive
+  digitalWrite(MCP4922Cs, HIGH);  // set CS as inactive
   pinMode(MCP4922Ldac, OUTPUT);
   SPI.begin();
   SPI.beginTransaction(MCP4922_SPISetting);
@@ -218,12 +207,7 @@ void loop()
 
   // drate = (float)analgoRead(PotRate) / 102.4f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
-  /*
-    if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
-      waveshape_pushed_wait = DEBOUNCE_WAIT;
-      digitalWrite(LedSin, !digitalRead(LedSin));
-    }
-  */
+
   digitalWrite(CheckPin2, LOW);
 
 #if UART_TRACE
