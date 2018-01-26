@@ -11,26 +11,27 @@
 
 #define UART_TRACE  (1)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180124")
+#define TITLE_STR2  ("20180126")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
-#define WAVESHAPE_NUM  (1)
-#define DEBOUNCE_WAIT (64)
+#define WAVESHAPE_NUM  (5)
+#define DEBOUNCE_WAIT (255)
 
 // Pin Assign
 const int PotRate = 0;     // A0
 
 const int ButtonWaveShape = 2;
-const int LedSquare = 3;
-const int LedSawUp = 4;
-const int LedSawDown = 5;
-const int LedTriangle = 6;
-const int LedSine = 7;
 
-const int MCP4922Cs = 10;
+const int LedSin = 3;
+const int LedTri = 4;
+const int LedSqr = 5;
+const int LedSawUp = 6;
+const int LedSawDown = 7;
+
 const int MCP4922Ldac = 9;
+const int MCP4922Cs = 10;
 
 const int CheckPin1 = 18; // A4
 const int CheckPin2 = 19; // A5
@@ -58,7 +59,7 @@ volatile uint32_t phaccu;
 volatile uint32_t tword_m;
 
 // Debounce
-volatile uint16_t waveshape_pushed_wait = 0;
+volatile int16_t waveshape_pushed_wait = 0;
 
 //-------------------------------------------------------------------------------------------------
 // Interrupt Service Routine
@@ -107,13 +108,23 @@ ISR(TIMER2_OVF_vect)
   }
 
   // debounce
-  if (waveshape_pushed_wait > 0)  waveshape_pushed_wait--;
-  if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
-    waveshape_sel++;
-    if (waveshape_sel >= WAVESHAPE_NUM)  waveshape_sel = 0;
+  if (waveshape_pushed_wait > 0) {
+    waveshape_pushed_wait--;
+    if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
+      waveshape_sel++;
+      if (waveshape_sel >= WAVESHAPE_NUM) {
+        waveshape_sel = 0;
+      }
+    }
   }
 
   digitalWrite(CheckPin1, LOW);
+}
+
+void waveshape_pushed()
+{
+  digitalWrite(LedSin, !digitalRead(LedSin));
+  waveshape_pushed_wait = DEBOUNCE_WAIT;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -141,25 +152,38 @@ void Setup_timer2()
   cbi (TCCR2B, CS22);
 }
 
+void LedsCheck()
+{
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(LedSqr, HIGH);
+    digitalWrite(LedSawUp, HIGH);
+    digitalWrite(LedSawDown, HIGH);
+    digitalWrite(LedTri, HIGH);
+    digitalWrite(LedSin, HIGH);
+    delay(100);
+    digitalWrite(LedSqr, LOW);
+    digitalWrite(LedSawUp, LOW);
+    digitalWrite(LedSawDown, LOW);
+    digitalWrite(LedTri, LOW);
+    digitalWrite(LedSin, LOW);
+    delay(100);
+  }
+}
+
 void setup()
 {
-  /*
-    waveshapes[0] = sin_12bit_2k;
-    waveshapes[1] = tri_12bit_2k;
-    waveshapes[2] = sqr_12bit_2k;
-    waveshapes[3] = sawup_12bit_2k;
-    waveshapes[4] = sawdown_12bit_2k;
-  */
   tword_m = pow(2, 32) * drate / refclk;  // calculate DDS tuning word;
 
   pinMode(ButtonWaveShape, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(ButtonWaveShape), waveshape_pushed, FALLING);
 
-  pinMode(LedSquare, OUTPUT);
+  pinMode(LedSin, OUTPUT);
+  pinMode(LedTri, OUTPUT);
+  pinMode(LedSqr, OUTPUT);
   pinMode(LedSawUp, OUTPUT);
-  pinMode(LedSquare, OUTPUT);
   pinMode(LedSawDown, OUTPUT);
-  pinMode(LedTriangle, OUTPUT);
-  pinMode(LedSine, OUTPUT);
+
+  LedsCheck();
 
   pinMode(CheckPin1, OUTPUT);
   pinMode(CheckPin2, OUTPUT);
@@ -181,7 +205,7 @@ void setup()
   Serial.println(TITLE_STR1);
   Serial.println(TITLE_STR2);
 #endif
-  
+
   sei();
 }
 
@@ -194,12 +218,12 @@ void loop()
 
   // drate = (float)analgoRead(PotRate) / 102.4f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
-
-  if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
-    waveshape_pushed_wait = DEBOUNCE_WAIT;
-    digitalWrite(LedSine, !digitalRead(LedSine));
-  }
-
+  /*
+    if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
+      waveshape_pushed_wait = DEBOUNCE_WAIT;
+      digitalWrite(LedSin, !digitalRead(LedSin));
+    }
+  */
   digitalWrite(CheckPin2, LOW);
 
 #if UART_TRACE
