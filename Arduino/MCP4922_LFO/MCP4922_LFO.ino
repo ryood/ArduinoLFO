@@ -12,12 +12,11 @@
 #define PIN_CHECK   (1)
 #define UART_TRACE  (0)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180128")
+#define TITLE_STR2  ("20180129")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
-#define WAVESHAPE_NUM  (5)
 #define DEBOUNCE_WAIT (1000)
 
 // Pin Assign
@@ -52,7 +51,8 @@ enum {
   WS_TRI,
   WS_SQR,
   WS_SAWUP,
-  WS_SAWDOWN
+  WS_SAWDOWN,
+  WS_MAX
 };
 
 int waveshape_sel = WS_SIN;           // selected waveshape
@@ -119,7 +119,7 @@ ISR(TIMER2_OVF_vect)
     waveshape_pushed_wait--;
     if (waveshape_pushed_wait == 0 && digitalRead(ButtonWaveShape) == LOW) {
       waveshape_sel++;
-      if (waveshape_sel >= WAVESHAPE_NUM) {
+      if (waveshape_sel >= WS_MAX) {
         waveshape_sel = 0;
       }
     }
@@ -217,7 +217,7 @@ void loop()
 #endif
 
   // DDS
-  drate = (float)analogRead(PotRate) / 10.23f;
+  drate = (float)analogRead(PotRate) / 102.3f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width

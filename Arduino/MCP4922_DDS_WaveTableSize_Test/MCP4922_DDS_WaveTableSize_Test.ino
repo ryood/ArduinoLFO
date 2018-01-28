@@ -29,7 +29,7 @@ const int CheckPin2 = 19;      // A5
 SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
-double drate = 50.0;                 // initial output rate (Hz)
+double drate = 1000.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
 // DDS
