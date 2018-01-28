@@ -12,7 +12,7 @@
 
 /*** MAX_VALUE = 4096 SAMPLE_NUM = 4096 ***/
 /*** sine wave ***/
-const PROGMEM  uint16_t sin_12bit_4k[]  = {
+const PROGMEM  uint16_t sin_table[]  = {
 	2047	,
 	2050	,
 	2053	,

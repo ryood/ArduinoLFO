@@ -9,7 +9,7 @@
 #define _WAVETABLE_12bit_8k_H_
 
 // table of 8192 values / one period / stored in flash memory
-const PROGMEM  uint16_t sin_12bit_8k[]  = {
+const PROGMEM  uint16_t sin_table[]  = {
   2047,
   2049,
   2050,

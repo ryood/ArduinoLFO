@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #define MAX_VALUE	(4096)
-#define SAMPLE_NUM	(2048)
+#define SAMPLE_NUM	(1024)
 
 int _tmain(int argc, _TCHAR* argv[])
 {

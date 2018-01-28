@@ -9,9 +9,10 @@
 
 #include "wavetable_12bit_2k.h"
 
-#define UART_TRACE  (1)
+#define PIN_CHECK   (1)
+#define UART_TRACE  (0)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180126")
+#define TITLE_STR2  ("20180128")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -34,8 +35,10 @@ const int LedSawDown = 7;
 const int MCP4922Ldac = 9;
 const int MCP4922Cs = 10;
 
+#if (PIN_CHECK)
 const int CheckPin1 = 18;      // A4
 const int CheckPin2 = 19;      // A5
+#endif
 
 // MCP4922
 SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
@@ -85,7 +88,9 @@ void MCP4922Write(bool channel, uint16_t val)
 
 ISR(TIMER2_OVF_vect)
 {
+#if (PIN_CHECK)
   digitalWrite(CheckPin1, HIGH);
+#endif
 
   // synthesize
   phaccu = phaccu + tword_m;
@@ -119,8 +124,9 @@ ISR(TIMER2_OVF_vect)
       }
     }
   }
-
+#if (PIN_CHECK)
   digitalWrite(CheckPin1, LOW);
+#endif
 }
 
 void waveshape_pushed()
@@ -175,8 +181,10 @@ void setup()
   DDRD |= 0xf8;
   LedsCheck();
 
+#if (PIN_CHECK)
   pinMode(CheckPin1, OUTPUT);
   pinMode(CheckPin2, OUTPUT);
+#endif
 
   pinMode(MCP4922Cs, OUTPUT);
   digitalWrite(MCP4922Cs, HIGH);  // set CS as inactive
@@ -204,10 +212,12 @@ void setup()
 //
 void loop()
 {
+#if (PIN_CHECK)
   digitalWrite(CheckPin2, HIGH);
+#endif
 
   // DDS
-  drate = (float)analogRead(PotRate) / 102.3f;
+  drate = (float)analogRead(PotRate) / 10.23f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width
@@ -217,7 +227,9 @@ void loop()
   byte portd_bits = (1 << (waveshape_sel + 3)) | (PORTD & 0x07);
   PORTD = portd_bits;
 
+#if (PIN_CHECK)
   digitalWrite(CheckPin2, LOW);
+#endif
 
 #if UART_TRACE
   Serial.print("waveshape_sel: ");
