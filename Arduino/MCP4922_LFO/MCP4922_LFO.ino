@@ -217,7 +217,7 @@ void loop()
 #endif
 
   // DDS
-  drate = (float)analogRead(PotRate) / 102.3f;
+  drate = (float)analogRead(PotRate) / 10.23f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width

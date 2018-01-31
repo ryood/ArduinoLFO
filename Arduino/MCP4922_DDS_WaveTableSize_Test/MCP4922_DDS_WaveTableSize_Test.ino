@@ -8,7 +8,7 @@
 #include <SPI.h>
 #include "avr/pgmspace.h"
 
-#include "wavetable_12bit_8k.h"
+#include "wavetable_12bit_2k.h"
 
 #define PIN_CHECK  (0)
 #define BIT_LENGTH_8  (0)
@@ -29,7 +29,7 @@ const int CheckPin2 = 19;      // A5
 SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
-double drate = 1000.0;                 // initial output rate (Hz)
+double drate = 50.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
 // DDS
@@ -66,7 +66,7 @@ ISR(TIMER2_OVF_vect)
   phaccu = phaccu + tword_m;
 
   // テーブルサイズに合わせてシフトするビットを変更
-  int idx = phaccu >> 19;  // use upper n bits (table size)
+  int idx = phaccu >> 21;  // use upper n bits (table size)
 
 #if (BIT_LENGTH_8)
   MCP4922Write(0, pgm_read_word_near(sin_table + idx) << 4);
