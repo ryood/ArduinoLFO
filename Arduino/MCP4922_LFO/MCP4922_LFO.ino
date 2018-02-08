@@ -24,13 +24,13 @@
 const int PotRate = 0;          // A0
 const int PotPulseWidth = 1;    // A1
 
-const int ButtonWaveShape = 2;
+const int ButtonWaveShape = 2;  // INT0
+const int SynIn = 3;            // INT1
 
-const int LedSin = 3;
-const int LedTri = 4;
-const int LedSqr = 5;
-const int LedSawUp = 6;
-const int LedSawDown = 7;
+const int Led1 = 4;
+const int Led2 = 5;
+const int Led3 = 6;
+const int Led4 = 7;
 
 const int MCP4922Ldac = 9;
 const int MCP4922Cs = 10;
@@ -48,15 +48,15 @@ double drate = 10.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
 enum {
-  WS_SIN,
   WS_TRI,
   WS_SQR,
   WS_SAWUP,
   WS_SAWDOWN,
+  WS_SIN,
   WS_MAX
 };
 
-int waveshape_sel = WS_SQR;           // selected waveshape
+int waveshape_sel = WS_TRI;           // selected waveshape
 
 int pulse_width = COUNT_OF_ENTRIES / 2;
 
@@ -166,8 +166,8 @@ void Setup_timer2()
 
 void LedsCheck()
 {
-  for (int j = 0; j < 3; j++) {
-    for (int i = 3; i <= 7; i++) {
+  for (int j = 0; j < 2; j++) {
+    for (int i = 4; i <= 7; i++) {
       PORTD |= (1 << i);
       delay(100);
       PORTD &= ~(1 << i);
@@ -182,8 +182,8 @@ void setup()
   pinMode(ButtonWaveShape, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ButtonWaveShape), waveshape_pushed, FALLING);
 
-  // set LEDs (D3~D7) as OUTPUT
-  DDRD |= 0xf8;
+  // set LEDs (D4~D7) as OUTPUT
+  DDRD |= 0xf0;
   LedsCheck();
 
 #if (PIN_CHECK)
@@ -228,8 +228,19 @@ void loop()
   // Pulse Width
   pulse_width = analogRead(PotPulseWidth) * COUNT_OF_ENTRIES / 1024;
 
-  // Write to LEDs (D3~D7)
-  byte portd_bits = (1 << (waveshape_sel + 3)) | (PORTD & 0x07);
+  // Write to LEDs (D4~D7)
+  byte portd_bits = 0;
+  switch (waveshape_sel) {
+    case WS_TRI:
+    case WS_SQR:
+    case WS_SAWUP:
+    case WS_SAWDOWN:
+      portd_bits = (1 << (waveshape_sel + 4)) | (PORTD & 0x0f);
+      break;
+    case WS_SIN:
+      portd_bits = 0x30 | (PORTD & 0x0f); // LED:xxoo
+      break;
+  }
   PORTD = portd_bits;
 
 #if (PIN_CHECK)
