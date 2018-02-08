@@ -236,10 +236,10 @@ void loop()
   // Pulse Width
   pulse_width = analogRead(PotPulseWidth) * COUNT_OF_ENTRIES / 1024;
 
-  // Write to LEDs (D4~D7)
+  // Write to LEDs
   byte portd_bits = 0;
   switch (waveshape_sel) {
-    case WS_TRI:
+    case WS_TRI: 
     case WS_SQR:
     case WS_SAWUP:
     case WS_SAWDOWN:
@@ -251,6 +251,7 @@ void loop()
   }
   PORTD = portd_bits;
 
+      
 #if (PIN_CHECK)
   digitalWrite(CheckPin2, LOW);
 #endif
