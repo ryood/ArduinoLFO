@@ -25,7 +25,7 @@ const int PotRate = 0;          // A0
 const int PotPulseWidth = 1;    // A1
 
 const int ButtonWaveShape = 2;  // INT0
-const int SynIn = 3;            // INT1
+const int SyncInPin = 3;         // INT1
 
 const int Led1 = 4;
 const int Led2 = 5;
@@ -139,6 +139,11 @@ void waveshape_pushed()
   waveshape_pushed_wait = DEBOUNCE_WAIT;
 }
 
+void sync_in()
+{
+  phaccu = 0;
+}
+
 //-------------------------------------------------------------------------------------------------
 // Setup
 //
@@ -181,6 +186,9 @@ void setup()
 
   pinMode(ButtonWaveShape, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ButtonWaveShape), waveshape_pushed, FALLING);
+
+  pinMode(SyncInPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(SyncInPin), sync_in, RISING);
 
   // set LEDs (D4~D7) as OUTPUT
   DDRD |= 0xf0;
