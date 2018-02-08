@@ -8,11 +8,12 @@
 #include "avr/pgmspace.h"
 
 #include "wavetable_12bit_2k.h"
+#define COUNT_OF_ENTRIES  (2048)
 
 #define PIN_CHECK   (1)
 #define UART_TRACE  (0)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180129")
+#define TITLE_STR2  ("20180208")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -55,9 +56,9 @@ enum {
   WS_MAX
 };
 
-int waveshape_sel = WS_SIN;           // selected waveshape
+int waveshape_sel = WS_SQR;           // selected waveshape
 
-int pulse_width = 512;
+int pulse_width = COUNT_OF_ENTRIES / 2;
 
 // DDS
 volatile uint32_t phaccu;
@@ -104,7 +105,11 @@ ISR(TIMER2_OVF_vect)
       MCP4922Write(0, pgm_read_word_near(tri_12bit_2k + idx));
       break;
     case WS_SQR:
-      MCP4922Write(0, pgm_read_word_near(sqr_12bit_2k + idx));
+      if (idx < pulse_width) {
+        MCP4922Write(0, 4095);
+      } else {
+        MCP4922Write(0, 0);
+      }
       break;
     case WS_SAWUP:
       MCP4922Write(0, pgm_read_word_near(sawup_12bit_2k + idx));
@@ -221,7 +226,7 @@ void loop()
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width
-  pulse_width = analogRead(PotPulseWidth);
+  pulse_width = analogRead(PotPulseWidth) * COUNT_OF_ENTRIES / 1024;
 
   // Write to LEDs (D3~D7)
   byte portd_bits = (1 << (waveshape_sel + 3)) | (PORTD & 0x07);
