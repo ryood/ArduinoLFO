@@ -7,8 +7,8 @@
 #include <SPI.h>
 #include "avr/pgmspace.h"
 
-#include "wavetable_12bit_2k.h"
-#define COUNT_OF_ENTRIES  (2048)
+#include "wavetable_12bit_4k.h"
+#define COUNT_OF_ENTRIES  (4096)
 
 #define PIN_CHECK   (1)
 #define UART_TRACE  (0)
@@ -25,7 +25,7 @@ const int PotRate = 0;          // A0
 const int PotPulseWidth = 1;    // A1
 
 const int ButtonWaveShape = 2;  // INT0
-const int SyncInPin = 3;         // INT1
+const int SyncInPin = 3;        // INT1
 
 const int Led1 = 4;
 const int Led2 = 5;
@@ -95,14 +95,14 @@ ISR(TIMER2_OVF_vect)
 
   // synthesize
   phaccu = phaccu + tword_m;
-  int idx = phaccu >> 21;  // use upper 11 bits
+  int idx = phaccu >> 20;  // use upper 12 bits
 
   switch (waveshape_sel) {
     case WS_SIN:
-      MCP4922Write(0, pgm_read_word_near(sin_12bit_2k + idx));
+      MCP4922Write(0, pgm_read_word_near(sin_12bit_4k + idx));
       break;
     case WS_TRI:
-      MCP4922Write(0, pgm_read_word_near(tri_12bit_2k + idx));
+      MCP4922Write(0, pgm_read_word_near(tri_12bit_4k + idx));
       break;
     case WS_SQR:
       if (idx < pulse_width) {
@@ -112,10 +112,10 @@ ISR(TIMER2_OVF_vect)
       }
       break;
     case WS_SAWUP:
-      MCP4922Write(0, phaccu >> 20);  // 12bit value for MCP4922
+      MCP4922Write(0, idx);  // 12bit value for MCP4922
       break;
     case WS_SAWDOWN:
-      MCP4922Write(0, 4095 - phaccu >> 20);  // 12bit value for MCP4922
+      MCP4922Write(0, 4095 - idx);  // 12bit value for MCP4922
       break;
   }
 
