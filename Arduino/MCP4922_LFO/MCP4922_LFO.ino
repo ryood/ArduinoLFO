@@ -112,10 +112,10 @@ ISR(TIMER2_OVF_vect)
       }
       break;
     case WS_SAWUP:
-      MCP4922Write(0, pgm_read_word_near(sawup_12bit_2k + idx));
+      MCP4922Write(0, phaccu >> 20);  // 12bit value for MCP4922
       break;
     case WS_SAWDOWN:
-      MCP4922Write(0, pgm_read_word_near(sawdown_12bit_2k + idx));
+      MCP4922Write(0, 4095 - phaccu >> 20);  // 12bit value for MCP4922
       break;
   }
 
