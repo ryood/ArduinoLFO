@@ -13,7 +13,7 @@
 #define PIN_CHECK   (1)
 #define UART_TRACE  (0)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180208")
+#define TITLE_STR2  ("20180214")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -56,7 +56,7 @@ enum {
   WS_MAX
 };
 
-int waveshape_sel = WS_TRI;           // selected waveshape
+int waveshape_sel = WS_SQR;           // selected waveshape
 
 int pulse_width = COUNT_OF_ENTRIES / 2;
 
@@ -79,12 +79,12 @@ void MCP4922Write(bool channel, uint16_t val)
   uint16_t cmd = channel << 15 | 0x3000;
   cmd |= (val & 0x0fff);
 
-  digitalWrite(MCP4922Ldac, HIGH);
+  //digitalWrite(MCP4922Ldac, HIGH);
   digitalWrite(MCP4922Cs, LOW);
   SPI.transfer(highByte(cmd));
   SPI.transfer(lowByte(cmd));
   digitalWrite(MCP4922Cs, HIGH);
-  digitalWrite(MCP4922Ldac, LOW);
+  //digitalWrite(MCP4922Ldac, LOW);
 }
 
 ISR(TIMER2_OVF_vect)
