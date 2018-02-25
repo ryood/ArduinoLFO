@@ -10,10 +10,10 @@
 #include "wavetable_12bit_4k.h"
 #define COUNT_OF_ENTRIES  (4096)
 
-#define PIN_CHECK   (1)
-#define UART_TRACE  (0)
+#define PIN_CHECK   (0)
+#define UART_TRACE  (1)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180214")
+#define TITLE_STR2  ("20180226")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -48,15 +48,15 @@ double drate = 10.0;                 // initial output rate (Hz)
 const double refclk = 15625.0;       // = 16MHz / 8 / 128
 
 enum {
+  WS_SIN,
   WS_TRI,
-  WS_SQR,
   WS_SAWUP,
   WS_SAWDOWN,
-  WS_SIN,
+  WS_SQR,
   WS_MAX
 };
 
-int waveshape_sel = WS_SQR;           // selected waveshape
+int waveshape_sel = WS_SIN;           // selected waveshape
 
 int pulse_width = COUNT_OF_ENTRIES / 2;
 
@@ -230,27 +230,26 @@ void loop()
 #endif
 
   // DDS
-  drate = (float)analogRead(PotRate) / 10.23f;
+  drate = (float)analogRead(PotRate) / 20.47f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width
-  pulse_width = analogRead(PotPulseWidth) * COUNT_OF_ENTRIES / 1024;
+  pulse_width = ((uint32_t)analogRead(PotPulseWidth) * COUNT_OF_ENTRIES / 1024) + 1;
 
   // Write to LEDs
   byte portd_bits = 0;
   switch (waveshape_sel) {
-    case WS_TRI: 
-    case WS_SQR:
+    case WS_SIN: 
+    case WS_TRI:
     case WS_SAWUP:
     case WS_SAWDOWN:
       portd_bits = (1 << (waveshape_sel + 4)) | (PORTD & 0x0f);
       break;
-    case WS_SIN:
+    case WS_SQR:
       portd_bits = 0x30 | (PORTD & 0x0f); // LED:xxoo
       break;
   }
   PORTD = portd_bits;
-
       
 #if (PIN_CHECK)
   digitalWrite(CheckPin2, LOW);
