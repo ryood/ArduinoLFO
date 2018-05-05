@@ -1,19 +1,19 @@
 /*
-   Arduino LFO
+   Arduino OSC
 
-   2018.01.19
+   2018.04.08
 
 */
 #include <SPI.h>
 #include "avr/pgmspace.h"
 
-#include "wavetable_12bit_4k.h"
+#include "wavetable_12bit_8k.h"
 #define COUNT_OF_ENTRIES  (4096)
 
 #define PIN_CHECK   (0)
-#define UART_TRACE  (1)
+#define UART_TRACE  (0)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180226")
+#define TITLE_STR2  ("20180408")
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
@@ -99,10 +99,10 @@ ISR(TIMER2_OVF_vect)
 
   switch (waveshape_sel) {
     case WS_SIN:
-      MCP4922Write(0, pgm_read_word_near(sin_12bit_4k + idx));
+      MCP4922Write(0, pgm_read_word_near(sin_12bit_8k + idx));
       break;
     case WS_TRI:
-      MCP4922Write(0, pgm_read_word_near(tri_12bit_4k + idx));
+      MCP4922Write(0, pgm_read_word_near(sin_12bit_8k + idx));
       break;
     case WS_SQR:
       if (idx < pulse_width) {
@@ -230,7 +230,8 @@ void loop()
 #endif
 
   // DDS
-  drate = (float)analogRead(PotRate) / 20.47f;
+  //drate = (float)analogRead(PotRate) / 20.47f;
+  drate = (float)analogRead(PotRate) / 2.0f;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width

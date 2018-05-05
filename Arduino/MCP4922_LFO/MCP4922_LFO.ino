@@ -13,12 +13,15 @@
 #define PIN_CHECK   (0)
 #define UART_TRACE  (1)
 #define TITLE_STR1  ("Arduino LFO")
-#define TITLE_STR2  ("20180226")
+#define TITLE_STR2  ("20180505")
+
+#define MAX_RATE    (10.0f)
+#define RATE_RATIO  (1024.0f / MAX_RATE)
+
+#define DEBOUNCE_WAIT (1000)
 
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
-
-#define DEBOUNCE_WAIT (1000)
 
 // Pin Assign
 const int PotRate = 0;          // A0
@@ -230,7 +233,7 @@ void loop()
 #endif
 
   // DDS
-  drate = (float)analogRead(PotRate) / 20.47f;
+  drate = (float)analogRead(PotRate) / RATE_RATIO;
   tword_m = pow(2, 32) * drate / refclk;  // calulate DDS new tuning word
 
   // Pulse Width
