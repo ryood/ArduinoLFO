@@ -11,7 +11,7 @@
 #define COUNT_OF_ENTRIES  (4096)
 
 #define PIN_CHECK   (0)
-#define UART_TRACE  (1)
+#define UART_TRACE  (0)
 #define TITLE_STR1  ("Arduino LFO")
 #define TITLE_STR2  ("20180505")
 
@@ -48,7 +48,7 @@ SPISettings MCP4922_SPISetting(8000000, MSBFIRST, SPI_MODE0);
 
 // Parameter
 double drate = 10.0;                 // initial output rate (Hz)
-const double refclk = 15625.0;       // = 16MHz / 8 / 128
+const double refclk = 25000.0;       // = 16MHz / 8 / 80
 
 enum {
   WS_SIN,
@@ -163,8 +163,8 @@ void Setup_timer2()
   sbi (TCCR2A, WGM21);
   sbi (TCCR2B, WGM22);
 
-  // 16000000 / 8 / 128 = 15625 Hz clock
-  OCR2A = 127;
+  // 16MHz / 8 / 80 = 25000 Hz clock
+  OCR2A = 79;
 
   // Timer2 Clock Prescaler to : 8
   cbi (TCCR2B, CS20);
